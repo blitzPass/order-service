@@ -3,12 +3,12 @@ version: "3.9"
 services:
   postgres:
     image: postgres:16
-    container_name: tickets_postgres
+    container_name: orders_postgres
     restart: always
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: pass
-      POSTGRES_DB: tickets
+      POSTGRES_DB: orders
     ports:
       - "5431:5432"
     volumes:

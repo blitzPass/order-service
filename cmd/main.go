@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
-	"ticket-service/infrastructure"
+	"order-service/infrastructure"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/joho/godotenv"
