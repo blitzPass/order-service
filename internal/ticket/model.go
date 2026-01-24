@@ -1,8 +1,9 @@
 package ticket
 
 type Ticket struct {
-	ID string
+	OrderId string
 	UserId string
 	EventId string
+	SectionId string
 
 }
