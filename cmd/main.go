@@ -2,16 +2,21 @@ package main
 
 import (
 	"fmt"
-	"os"
+	"log"
 	"order-service/infrastructure"
+	"order-service/pkg"
+	"os"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/joho/godotenv"
 )
 
 func main() {
-	app := fiber.New()
 	godotenv.Load()
+
+	app := fiber.New(fiber.Config{
+		ErrorHandler: pkg.ErrorHandler(),
+	})
 
 	dbUser := os.Getenv("DB_USER")
 	dbPass := os.Getenv("DB_PASS")
@@ -19,19 +24,26 @@ func main() {
 	dbName := os.Getenv("DB_NAME")
 	dbPort := os.Getenv("DB_PORT")
 	dbSslMode := os.Getenv("DB_SSL_MODE")
-	
-	// Database connection
-	var dataSource string = fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", dbUser, dbPass, dbHost, dbPort, dbName, dbSslMode)
+
+	dataSource := fmt.Sprintf(
+		"postgres://%s:%s@%s:%s/%s?sslmode=%s",
+		dbUser, dbPass, dbHost, dbPort, dbName, dbSslMode,
+	)
+
 	db, _ := infrastructure.NewPostgresConnection(dataSource)
-	err := db.Ping()
-	if err != nil {
+	if err := db.Ping(); err != nil {
 		panic("Database error: " + err.Error())
 	}
 
+	app.Get("/:id", func(c fiber.Ctx) error {
+		id := c.Params("id")
 
-	app.Get("/", func(c fiber.Ctx) {
-		c.JSON("Api is running")
+		if id == "error" {
+			return fiber.NewError(fiber.StatusInternalServerError, "this is an error")
+		}
+
+		return c.JSON("Api is running")
 	})
 
-	app.Listen(":3030")
+	log.Fatal(app.Listen(":3030"))
 }
