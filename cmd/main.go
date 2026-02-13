@@ -1,11 +1,22 @@
 package main
 
 import (
+	// "context"
+	"context"
 	"fmt"
 	"log"
 	"order-service/infrastructure"
+	"order-service/infrastructure/kafka"
+	"os/signal"
+	"syscall"
+
+	// "order-service/infrastructure/kafka"
+	// "order-service/infrastructure/kafka/handlers"
 	"order-service/pkg"
 	"os"
+
+	// "os/signal"
+	// "syscall"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/joho/godotenv"
@@ -13,6 +24,9 @@ import (
 
 func main() {
 	godotenv.Load()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	app := fiber.New(fiber.Config{
 		ErrorHandler: pkg.ErrorHandler(),
@@ -35,6 +49,17 @@ func main() {
 		panic("Database error: " + err.Error())
 	}
 
+
+	// Kafka Consumer
+	consumer := kafka.NewConsumer(
+		[]string{"localhost:9092"},
+		"order.events",
+		"order-service",
+	)
+
+	go consumer.Start(ctx)
+
+	
 	app.Get("/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 
@@ -44,6 +69,20 @@ func main() {
 
 		return c.JSON("Api is running")
 	})
+
+	// Graceful shutdown
+	go func() {
+		sig := make(chan os.Signal, 1)
+		signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
+		<-sig
+
+		log.Println("shutdown signal received")
+		cancel()
+		consumer.Close()
+		_ = app.Shutdown()
+	}()
+
+
 
 	log.Fatal(app.Listen(":3030"))
 }
