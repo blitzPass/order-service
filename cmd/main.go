@@ -50,9 +50,11 @@ func main() {
 	}
 
 
+	kafkaConsumer := os.Getenv("KAFKA_CONSUMER")
+
 	// Kafka Consumer
 	consumer := kafka.NewConsumer(
-		[]string{"localhost:9092"},
+		[]string{kafkaConsumer},
 		"order.events",
 		"order-service",
 	)
